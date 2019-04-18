@@ -1,0 +1,11 @@
+[package]
+name = "kompres"
+version = "0.1.0"
+authors = ["Kyle McCarthy <kyle@creativeanvil.com>"]
+edition = "2018"
+
+[dependencies]
+imagequant = "2.11.9"
+lodepng = "2.4.2"
+flate2 = "1.0.7"
+
