@@ -1,7 +1,10 @@
+mod filter;
+
+use filter::filtering;
 use flate2::read::ZlibEncoder;
 use flate2::Compression;
 use imagequant;
-use lodepng::{self, ColorType::PALETTE, CompressSettings, State, RGBA};
+use lodepng::{self, ColorMode, ColorType::PALETTE, CompressSettings, State, RGBA};
 use std::env;
 use std::io::Read;
 use std::os::raw::c_uchar;
@@ -47,23 +50,27 @@ fn main() {
 
     // encode and output final filesize
     match state.encode(&pixels, width, height) {
-        Ok(out_buffer) => {
+        Ok(mut out_buffer) => {
             println!("Output buffer size {}", out_buffer.len());
-            filtering(out_buffer, width, height);
+            filtering(&mut out_buffer, width, height, &state.info_png().color);
         }
         Err(_) => {
             panic!("failed to encode the image");
         }
     }
 
-    state
-        .encode_file(output_filename, &pixels, width, height)
-        .unwrap();
+    //    state
+    //        .encode_file(output_filename, &pixels, width, height)
+    //        .unwrap();
 }
 
 // using imagequant quantize the PNG to reduce the file size
 // returns the palette and vector of pixels
-fn quantize(buffer: &[RGBA], width: usize, height: usize) -> (Vec<RGBA>, Vec<u8>) {
+fn quantize<PixelType: Copy>(
+    buffer: &[PixelType],
+    width: usize,
+    height: usize,
+) -> (Vec<RGBA>, Vec<u8>) {
     // quantize
     let mut liq = imagequant::new();
     liq.set_speed(1);
@@ -148,10 +155,4 @@ fn deflate(input: &[u8], _settings: CompressSettings) -> (Vec<u8>, usize) {
 // convert the raw buffer to a vector
 unsafe fn vec_from_raw(data: *const c_uchar, len: usize) -> Vec<u8> {
     std::slice::from_raw_parts(data, len).to_owned()
-}
-
-fn filtering(buffer: Vec<u8>, _width: usize, _height: usize) {
-    //    let w_buffer: &
-    //    let encoder = png::Encoder::new(&buffer as &[u8], width, height);
-    dbg!(buffer);
 }
